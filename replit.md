@@ -63,8 +63,31 @@ Preferred communication style: Simple, everyday language.
 
 ## Setup Notes
 
-- Python 3.11 runtime
-- Dependencies managed via `uv` / `pyproject.toml`
+- Python 3.11 runtime (Replit) / Python 3.12 (Vercel)
+- Dependencies managed via `uv` / `pyproject.toml` (Replit) and `requirements.txt` (Vercel)
 - The bare `telegram` package (0.0.1) conflicts with `python-telegram-bot` — do not add it as a dependency
-- Workflow: "Start application" runs `python main.py` on port 5000
+- Workflow: "Start application" runs `python main.py` on port 5000 (polling mode for Replit dev)
 - Deployment target: VM (always-running, needed for long-lived bot polling)
+
+## Vercel Webhook Deployment
+
+The project supports Vercel serverless webhook deployment in addition to Replit polling mode.
+
+### Files
+- `api/webhook.py` — Vercel serverless function, handles POST updates from Telegram
+- `requirements.txt` — Python dependencies for Vercel
+- `vercel.json` — Vercel function config (Python 3.12, 10s max duration)
+
+### Steps to deploy on Vercel
+1. Push this repo to GitHub
+2. Import into Vercel and set environment variables:
+   - `TELEGRAM_BOT_TOKEN`
+   - `TARGET_GROUP_ID`
+3. Deploy — your webhook URL will be `https://<your-domain>/api/webhook`
+4. Register the webhook with Telegram:
+   ```
+   https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<your-domain>/api/webhook
+   ```
+
+### Note on job_queue / auto-delete
+The 60-second message auto-deletion feature (job_queue) is **not available** in Vercel serverless mode because functions terminate after handling each request. The core forwarding of verification codes works fully.
