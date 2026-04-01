@@ -4,9 +4,5 @@
       "runtime": "python3.12",
       "maxDuration": 10
     }
-  },
-  "env": {
-    "TELEGRAM_BOT_TOKEN": "@telegram_bot_token",
-    "TARGET_GROUP_ID": "@target_group_id"
   }
 }
