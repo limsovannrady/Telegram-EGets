@@ -35,7 +35,11 @@ def run_health_server():
 async def delete_msg(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
     if job and job.chat_id and job.data:
-        await context.bot.delete_message(chat_id=job.chat_id, message_id=job.data)
+        try:
+            await context.bot.delete_message(chat_id=job.chat_id, message_id=job.data)
+            logging.info(f"Deleted message {job.data} from chat {job.chat_id}")
+        except Exception as e:
+            logging.error(f"Failed to delete message {job.data} from chat {job.chat_id}: {e}")
 
 async def copy_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
