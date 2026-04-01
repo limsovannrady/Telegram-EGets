@@ -1,9 +1,12 @@
 [project]
-name = "python-template"
+name = "telegram-egets-bot"
 version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
+description = "Telegram bot for E-GetS verification codes"
+authors = [
+    {name = "limsovannrady"}
+]
 requires-python = ">=3.11"
 dependencies = [
-    "python-telegram-bot[job-queue]>=22.6",
+    "python-telegram-bot>=22.6",
+    "flask>=3.0.0",
 ]
