@@ -3,7 +3,7 @@ import asyncio
 import os
 import re
 import logging
-from http.server import BaseHTTPRequestHandler
+from flask import Flask, request, Response
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters, CallbackQueryHandler
 
@@ -14,6 +14,8 @@ logging.basicConfig(
 
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 TARGET_GROUP_ID = int(os.environ.get('TARGET_GROUP_ID', '0'))
+
+app = Flask(__name__)
 
 
 async def copy_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -75,40 +77,31 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-def build_app():
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    app.add_handler(CallbackQueryHandler(copy_callback, pattern=r'^copy_'))
-    return app
+def build_bot_app():
+    bot_app = ApplicationBuilder().token(TOKEN).build()
+    bot_app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+    bot_app.add_handler(CallbackQueryHandler(copy_callback, pattern=r'^copy_'))
+    return bot_app
 
 
 async def process_update(update_data: dict):
-    app = build_app()
-    async with app:
-        update = Update.de_json(update_data, app.bot)
-        await app.process_update(update)
+    bot_app = build_bot_app()
+    async with bot_app:
+        update = Update.de_json(update_data, bot_app.bot)
+        await bot_app.process_update(update)
 
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        try:
-            content_length = int(self.headers.get('Content-Length', 0))
-            body = self.rfile.read(content_length)
-            update_data = json.loads(body)
-            asyncio.run(process_update(update_data))
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b'OK')
-        except Exception as e:
-            logging.error(f"Webhook error: {e}")
-            self.send_response(500)
-            self.end_headers()
-            self.wfile.write(b'Error')
+@app.route('/api/webhook', methods=['POST'])
+def webhook():
+    try:
+        update_data = request.get_json(force=True)
+        asyncio.run(process_update(update_data))
+        return Response('OK', status=200)
+    except Exception as e:
+        logging.error(f"Webhook error: {e}")
+        return Response('Error', status=500)
 
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b'Webhook is active.')
 
-    def log_message(self, format, *args):
-        pass
+@app.route('/api/webhook', methods=['GET'])
+def health():
+    return Response('Webhook is active.', status=200)
