@@ -92,6 +92,8 @@ async def process_update(update_data: dict):
 
 
 @app.route('/api/webhook', methods=['POST'])
+@app.route('/api/index', methods=['POST'])
+@app.route('/', methods=['POST'])
 def webhook():
     try:
         update_data = request.get_json(force=True)
@@ -103,5 +105,7 @@ def webhook():
 
 
 @app.route('/api/webhook', methods=['GET'])
+@app.route('/api/index', methods=['GET'])
+@app.route('/', methods=['GET'])
 def health():
     return Response('Webhook is active.', status=200)
